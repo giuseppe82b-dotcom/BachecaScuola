@@ -28,10 +28,12 @@
             font-family: 'Nunito', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
-            height: 100vh;
-            overflow: hidden;
+            /* MODIFICA 1: Abilitato scrolling e altezza automatica */
+            height: auto; 
+            min-height: 100vh;
+            overflow-y: auto; 
             display: grid;
-            grid-template-rows: 80px 1fr 180px; /* Header - Main - Footer */
+            grid-template-rows: 80px auto auto; /* Header - Main - Footer */
             padding: 15px;
             gap: 15px;
         }
@@ -64,10 +66,10 @@
         /* --- CONTENUTO CENTRALE --- */
         .main-content {
             display: grid;
+            /* Su schermi piccoli va in colonna, su grandi 2 colonne */
             grid-template-columns: 2fr 1fr; 
             gap: 15px;
-            height: 100%;
-            overflow: hidden;
+            height: auto;
         }
 
         /* 2. CALENDARIO GOOGLE */
@@ -79,20 +81,22 @@
             display: flex;
             flex-direction: column;
             border-top: 5px solid #4285F4;
+            min-height: 600px; /* Altezza minima per vedere bene il calendario */
         }
         .section-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;}
         
         iframe.google-cal {
             width: 100%;
             height: 100%;
+            flex-grow: 1;
             border: none;
             border-radius: 8px;
         }
 
         /* COLONNA DESTRA */
         .right-col {
-            display: grid;
-            grid-template-rows: 1fr 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 15px;
         }
 
@@ -102,7 +106,6 @@
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             padding: 15px;
-            overflow-y: auto;
             border-top: 5px solid var(--map-color);
         }
         .floor {
@@ -115,26 +118,10 @@
         .floor h4 { color: var(--map-color); margin-bottom: 4px; }
         .floor p { font-size: 0.9rem; color: #555; }
 
-        /* 6. AVVISI AGGIORNABILI LOCALI */
-        .notice-box {
-            background: white;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 15px;
-            background-color: #fff0f0;
-            border: 2px dashed var(--notice-color);
-            position: relative;
-        }
-        .notice-content {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #d32f2f;
-        }
-
-        /* 4. FOOTER (AVVISI TELEGRAM + LINK) */
+        /* 4. FOOTER (LINK RIMASTI) */
         .links-container {
             display: grid;
-            grid-template-columns: repeat(4, 1fr); 
+            grid-template-columns: 1fr 1fr; /* Due colonne uguali per i link rimasti */
             gap: 15px;
         }
 
@@ -152,7 +139,7 @@
 
         .link-card img {
             width: 100%;
-            height: 100px;
+            height: 120px; /* Leggermente più alto ora */
             object-fit: cover;
         }
         .link-title {
@@ -163,7 +150,7 @@
             font-size: 0.9rem;
         }
 
-        /* NUOVO STILE AVVISI RAPIDI (EX YOUTUBE) */
+        /* MODIFICA 2: STILE TELEGRAM SPOSTATO */
         .alert-card {
             background: var(--alert-bg);
             border-radius: var(--radius);
@@ -174,24 +161,25 @@
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 15px;
+            padding: 20px;
             position: relative;
             overflow: hidden;
+            min-height: 200px; /* Altezza fissa per renderlo ben visibile a destra */
         }
         
-        .alert-icon { font-size: 2rem; margin-bottom: 5px; animation: pulse 2s infinite; }
-        .alert-label { font-size: 0.8rem; font-weight: 900; color: var(--alert-text); text-transform: uppercase; margin-bottom: 5px;}
+        .alert-icon { font-size: 3rem; margin-bottom: 10px; animation: pulse 2s infinite; }
+        .alert-label { font-size: 1rem; font-weight: 900; color: var(--alert-text); text-transform: uppercase; margin-bottom: 10px;}
         
         #telegram-msg {
-            font-size: 1.1rem;
+            font-size: 1.3rem; /* Testo più grande */
             font-weight: 800;
             color: var(--text-main);
-            line-height: 1.2;
+            line-height: 1.3;
         }
 
         @keyframes pulse {
             0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
+            50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
 
@@ -255,37 +243,28 @@
                 </div>
             </section>
 
-            <section class="notice-box">
-                <div class="section-title">⚠️ AVVISI GENERALI</div>
-                <div class="notice-content" contenteditable="true">
-                   Nessuna avviso al momento.
-                </div>
-            </section>
+            <div class="alert-card">
+                <div class="alert-icon">📢</div>
+                <div class="alert-label">AVVISI IN TEMPO REALE</div>
+                <div id="telegram-msg">In attesa di comunicazioni...</div>
+            </div>
         </div>
     </div>
 
     <footer class="links-container">
-        
-        <div class="alert-card">
-            <div class="alert-icon">📢</div>
-            <div class="alert-label">AVVISI IN TEMPO REALE</div>
-            <div id="telegram-msg">In attesa di comunicazioni...</div>
-        </div>
-
         <a href="#" class="link-card">
             <img src="https://via.placeholder.com/300x150/33C1FF/FFFFFF?text=Orario Docenti" alt="Orario Docenti">
-            <div class="link-title"></div>
+            <div class="link-title">Orario Docenti</div>
         </a>
         <a href="#" class="link-card">
             <img src="https://via.placeholder.com/300x150/7ED321/FFFFFF?text=Progetti" alt="Progetti">
-            <div class="link-title"></div>
+            <div class="link-title">Progetti d'Istituto</div>
         </a>
-       
     </footer>
 
     <script>
         // --- CONFIGURAZIONE TELEGRAM ---
-        // INSERISCI QUI IL TOKEN DEL TUO BOT (Vedi istruzioni sotto)
+        // TOKEN PRESERVATO
         const BOT_TOKEN = "8583561386:AAHb2OWWJn7GEFTbC1OZ4WyICO1puOVCCoE"; 
         
         // --- GESTIONE OROLOGIO E CAMPANELLA ---
@@ -334,19 +313,15 @@
 
         // --- FUNZIONE TELEGRAM ---
         async function checkTelegramUpdates() {
-            // Se non hai messo il token, esce
             if (BOT_TOKEN === "INSERISCI_IL_TUO_TOKEN_QUI") return;
 
             try {
-                // Chiediamo gli ultimi aggiornamenti al bot
-                // offset=-1 significa "dammi solo l'ultimissimo messaggio ricevuto"
                 const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=-1`);
                 const data = await response.json();
 
                 if (data.ok && data.result.length > 0) {
                     const lastMessage = data.result[0].message.text;
                     
-                    // Salviamo il messaggio in memoria locale per non perderlo se ricarichiamo pagina
                     localStorage.setItem('lastNotice', lastMessage);
                     telegramMsgBox.textContent = lastMessage;
                 }
@@ -355,7 +330,6 @@
             }
         }
 
-        // All'avvio, recupera l'ultimo avviso salvato (se c'è)
         const savedNotice = localStorage.getItem('lastNotice');
         if (savedNotice) {
             telegramMsgBox.textContent = savedNotice;
@@ -366,4 +340,3 @@
     </script>
 </body>
 </html>
-
