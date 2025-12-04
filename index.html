@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bacheca Digitale Scuola</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #3a86ff;
+            --header-color: #4A90E2; 
+            --clock-color: #F5A623;  
+            --cal-color: #cddafd;
+            --map-color: #7ED321;     
+            --notice-color: #FF5E5E; 
+            --link-color: #9013FE;   
+            --alert-bg: #FFEB3B;     
+            --alert-text: #D32F2F;   
+            --text-main: #333;
+            
+            --shadow: 0 4px 6px rgba(0,0,0,0.2); 
+            --radius: 15px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: auto; 
+            min-height: 100vh;
+            overflow-y: auto; 
+            display: grid;
+            grid-template-rows: 80px auto auto auto; 
+            padding: 15px;
+            gap: 15px;
+            position: relative; 
+        }
+
+        /* --- LAYER METEO --- */
+        #weather-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        
+        header, .main-content, .links-container, #start-overlay {
+            z-index: 10; position: relative;
+        }
+
+        /* --- ANIMAZIONI METEO --- */
+        .sun-ray {
+            position: absolute; top: -100px; right: -100px; width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(255,255,200,0.4) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%; animation: sun-pulse 10s infinite alternate;
+        }
+        @keyframes sun-pulse { 0% { transform: scale(1); opacity: 0.3; } 100% { transform: scale(1.2); opacity: 0.6; } }
+
+        .rain-drop {
+            position: absolute; background: rgba(255, 255, 255, 0.6); width: 2px; height: 15px;
+            top: -20px; animation: fall linear infinite;
+        }
+        @keyframes fall { to { transform: translateY(110vh); } }
+
+        .snowflake {
+            position: absolute; color: #fff; font-size: 1.5rem; top: -20px;
+            animation: fall-snow linear infinite;
+        }
+        @keyframes fall-snow { to { transform: translateY(110vh) rotate(360deg); } }
+
+        .cloud {
+            position: absolute; background: rgba(255, 255, 255, 0.4); border-radius: 50px;
+            animation: drift linear infinite;
+        }
+        .cloud::after, .cloud::before {
+            content: ''; position: absolute; background: inherit; border-radius: 50%;
+        }
+        @keyframes drift { from { transform: translateX(-200px); } to { transform: translateX(110vw); } }
+
+
+        /* --- HEADER & OROLOGIO --- */
+        header {
+            display: grid; grid-template-columns: 1fr auto; align-items: center;
+            background: var(--cal-color); padding: 0 20px; border-radius: var(--radius);
+            box-shadow: var(--shadow); border-left: 10px solid var(--header-color);
+        }
+
+        h1 { font-size: 2rem; color: var(--header-color); }
+        
+        .clock-container {
+            text-align: right; background: var(--clock-color); color: white;
+            padding: 5px 20px; border-radius: 30px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            display: flex; align-items: center; gap: 15px;
+        }
+        #weather-icon { font-size: 2rem; } 
+        #time { font-size: 2rem; font-weight: 900; }
+        #date { font-size: 0.9rem; font-weight: 700; opacity: 0.9; }
+
+        /* --- CONTENUTO CENTRALE (MODIFICATO) --- */
+        .main-content {
+            display: grid;
+            /* MODIFICA: 1050px fisso per il calendario, 1fr (resto dello spazio) per la colonna destra */
+            grid-template-columns: 1050px 1fr; 
+            gap: 15px;
+            height: auto;
+        }
+
+        /* CALENDARIO */
+        .calendar-box {
+            background: var(--cal-color); border-radius: var(--radius); box-shadow: var(--shadow);
+            padding: 10px; display: flex; flex-direction: column; border-top: 5px solid #4285F4;
+            /* L'altezza minima assicura che si veda bene, ma flex-grow lo farà allungare se la colonna destra è più lunga */
+            min-height: 600px;
+            height: 100%; 
+        }
+        .section-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;}
+        
+        iframe.google-cal {
+            width: 100%; height: 100%; flex-grow: 1; border: none; border-radius: 8px; background-color: white; 
+        }
+
+        /* COLONNA DESTRA */
+        .right-col {
+            display: flex; flex-direction: column; gap: 15px;
+        }
+
+        .map-box {
+            background: var(--cal-color); border-radius: var(--radius); box-shadow: var(--shadow);
+            padding: 15px; border-top: 5px solid var(--map-color);
+        }
+        .pomeriggio-box { border-top: 5px solid #FF9800; }
+
+        .floor {
+            margin-bottom: 10px; background: rgba(255,255,255, 0.6); padding: 8px;
+            border-radius: 8px; border-left: 4px solid var(--map-color);
+        }
+        .pomeriggio-item { border-left: 4px solid #FF9800; }
+
+        .floor h4 { color: var(--map-color); margin-bottom: 4px; }
+        .pomeriggio-item h4 { color: #E65100; margin-bottom: 4px; } 
+        .floor p { font-size: 0.9rem; color: #555; }
+
+        /* --- BOX SCORREVOLI (TICKER) --- */
+        .ticker-container {
+            width: 100%; height: 50px; overflow: hidden; border-radius: var(--radius);
+            box-shadow: var(--shadow); display: flex; align-items: center; position: relative;
+            white-space: nowrap;
+        }
+        .world-day-box { background: #E0C3FC; border-left: 5px solid #9013FE; color: #5B2C6F; }
+        .health-box { background: #C8E6C9; border-left: 5px solid #4CAF50; color: #1B5E20; }
+        .ticker-text {
+            display: inline-block; padding-left: 100%; animation: scroll-left 15s linear infinite;
+            font-weight: 800; font-size: 1.1rem; text-transform: uppercase;
+        }
+        @keyframes scroll-left { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+
+        /* --- TELEGRAM --- */
+        .alert-card {
+            background: var(--alert-bg); border-radius: var(--radius); box-shadow: var(--shadow);
+            border: 4px solid var(--alert-text); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center; padding: 20px;
+            min-height: 200px; 
+        }
+        .alert-icon { font-size: 3rem; margin-bottom: 10px; animation: pulse 2s infinite; }
+        .alert-label { font-size: 1rem; font-weight: 900; color: var(--alert-text); text-transform: uppercase; margin-bottom: 10px;}
+        #telegram-msg { font-size: 1.3rem; font-weight: 800; color: var(--text-main); line-height: 1.3; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        /* --- FOOTER & LINK --- */
+        .links-container {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;
+        }
+        .link-card {
+            background: var(--cal-color); border-radius: var(--radius); box-shadow: var(--shadow);
+            overflow: hidden; position: relative; transition: transform 0.2s; cursor: pointer; text-decoration: none;
+            display: block; 
+        }
+        .link-card:hover { transform: translateY(-5px); }
+        .link-card img { width: 100%; height: 120px; object-fit: cover; }
+        .link-title { padding: 10px; font-weight: 700; color: var(--link-color); text-align: center; font-size: 0.9rem; }
+
+        .info-card {
+            background: #fff; border-top: 5px solid var(--header-color);
+            display: flex; flex-direction: column; height: 100%;
+        }
+        .info-card h3 {
+            background: var(--cal-color); color: var(--header-color);
+            padding: 10px; text-align: center; font-size: 1.1rem;
+        }
+        .info-card ul { list-style: none; padding: 10px 15px; font-size: 0.85rem; }
+        .info-card li { margin-bottom: 8px; line-height: 1.4; color: #444; }
+        .info-card strong { color: var(--text-main); }
+
+        #start-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center;
+            z-index: 9999; color: white; flex-direction: column;
+        }
+        #start-btn {
+            padding: 15px 30px; font-size: 1.5rem; background: var(--map-color);
+            border: none; color: white; border-radius: 50px; cursor: pointer; margin-top: 20px;
+        }
+
+        /* MODIFICA RESPONSIVE: Se lo schermo è più piccolo di 1400px (il calendario fisso rompe il layout), vai a colonna singola */
+        @media (max-width: 1400px) {
+            .main-content { grid-template-columns: 1fr; }
+            .links-container { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="weather-overlay"></div>
+
+    <div id="start-overlay">
+        <h2>Clicca per attivare la Bacheca e la Campanella</h2>
+        <button id="start-btn">AVVIA DASHBOARD</button>
+    </div>
+
+    <audio id="bell-sound" src="campanella.mp3" preload="auto"></audio>
+
+    <header>
+        <h1>🏫 Scuola Media "Scalabrini"</h1>
+        <div class="clock-container">
+            <div id="weather-icon">☀️</div> 
+            <div>
+                <div id="time">00:00:00</div>
+                <div id="date">Caricamento...</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <section class="calendar-box">
+            <div class="section-title">📅 Impegni</div>
+            <iframe class="google-cal" 
+                src="https://calendar.google.com/calendar/embed?src=calendario.eventi%40icfinomornasco.it&ctz=Europe%2FRome&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&mode=AGENDA" 
+                style="border-width:0" frameborder="0" scrolling="no">
+            </iframe>
+        </section>
+
+        <div class="right-col">
+            
+            <section class="map-box">
+                <div class="section-title">📍 Mappa Classi</div>
+                <div class="floor">
+                    <h4>Piano Terra</h4> <p>1C, 1B, 1E, 2E</p>
+                </div>
+                <div class="floor">
+                    <h4>Primo Piano</h4> <p>Segreteria, Presidenza, 1A, 2A, 3A, 3E</p>
+                </div>
+                <div class="floor">
+                    <h4>Secondo Piano</h4> <p>Aula Musica, 3D, 1D, 2B, 2D, 2C, 3C, 3B</p>
+                </div>
+            </section>
+
+            <div class="ticker-container world-day-box">
+                <div class="ticker-text" id="world-day-text">🌍 Caricamento Giornata Mondiale...</div>
+            </div>
+
+            <div class="ticker-container health-box">
+                <div class="ticker-text" id="health-tip-text">🍎 Caricamento Consiglio Salute...</div>
+            </div>
+
+            <div class="alert-card">
+                <div class="alert-icon">📢</div>
+                <div class="alert-label">AVVISI IN TEMPO REALE</div>
+                <div id="telegram-msg">In attesa di comunicazioni...</div>
+            </div>
+
+            <section class="map-box pomeriggio-box">
+                <div class="section-title">🕒 Progetti Pomeridiani</div>
+                <div class="floor pomeriggio-item">
+                    <h4>Lunedi</h4> <p>MULTISPORT | ENGLISH4U7</p>
+                </div>
+                <div class="floor pomeriggio-item">
+                    <h4>Martedi</h4> <p>STUDIAMO INSIEME!</p>
+                </div>
+                <div class="floor pomeriggio-item">
+                    <h4>Mercoledì</h4> <p>CODING E ROBOTICA … IN 3D! | LA CREATIVITÀ È CONTAGIOSA</p>
+                </div>
+                <div class="floor pomeriggio-item">
+                    <h4>Giovedi</h4> <p>EMOZIONI&PAROLE...SUL PALCO</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="links-container">
+        <a href="orario docenti.pdf" target="_blank" class="link-card">
+            <img src="OrarioDocenti.png" alt="Orario Docenti">
+            <div class="link-title">Orario Docenti (PDF)</div>
+        </a>
+        <a href="https://icsfinomornasco.edu.it/solo-cose-belle/" target="_blank" class="link-card">
+            <img src="Progetti.png" alt="Progetti">
+            <div class="link-title">Solo Cose Belle</div>
+        </a>
+        <a href="https://icsfinomornasco.edu.it/finopodcast/" target="_blank" class="link-card">
+            <img src="FinoPodcastLogo.png" alt="FinoPodcast">
+            <div class="link-title">FinoPodcast</div>
+        </a>
+        <a href="https://www.artsteps.com/view/65bcebd9aa02ba1a0811f2b3" target="_blank" class="link-card">
+            <img src="MuseoVirtuale.jpg" alt="Museo Virtuale">
+            <div class="link-title">Museo Virtuale Scalabrini</div>
+        </a>
+    </div>
+
+    <div class="links-container">
+        
+        <a href="https://icsfinomornasco.edu.it/sport/" target="_blank" class="link-card">
+            <img src="TeamMORNASCOvola.png" alt="Team Mornasco">
+            <div class="link-title">Pagina Sportiva</div>
+        </a>
+
+        <div class="link-card info-card">
+            <h3>🏫 OPEN DAY</h3>
+            <ul>
+                <li>📅 <strong>08/11</strong> Fino Orienta<br>(Classi 3ª -> Superiori)</li>
+                <li style="margin-top:5px;">📅 <strong>15/11</strong> OpenDay<br>(Classi 5ª -> Medie)</li>
+            </ul>
+        </div>
+
+        <a href="https://icsfinomornasco.edu.it/wp-content/uploads/sites/1024/annuario-scolastico2025.pdf?x55116" target="_blank" class="link-card">
+            <img src="Annuario.png" alt="Annuario">
+            <div class="link-title">Annuario 2025</div>
+        </a>
+
+        <div class="link-card" style="background: transparent; box-shadow: none; cursor: default;">
+            </div>
+
+    </div>
+
+    <script>
+        const BOT_TOKEN = "8583561386:AAHb2OWWJn7GEFTbC1OZ4WyICO1puOVCCoE"; 
+        
+        const timeDisplay = document.getElementById('time');
+        const dateDisplay = document.getElementById('date');
+        const bellSound = document.getElementById('bell-sound');
+        const startBtn = document.getElementById('start-btn');
+        const overlay = document.getElementById('start-overlay');
+        const telegramMsgBox = document.getElementById('telegram-msg');
+        
+        let audioEnabled = false;
+
+        startBtn.addEventListener('click', () => {
+            overlay.style.display = 'none';
+            audioEnabled = true;
+            bellSound.play().then(() => {
+                bellSound.pause(); bellSound.currentTime = 0;
+            }).catch(e => console.log("Errore audio init:", e));
+            
+            checkTelegramUpdates();
+            setInterval(checkTelegramUpdates, 60000); 
+            updateWeather();
+            setInterval(updateWeather, 1800000);
+            updateTickers();
+        });
+
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            timeDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+            
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            dateDisplay.textContent = now.toLocaleDateString('it-IT', options);
+
+            if (audioEnabled && minutes === '00' && seconds === '00') {
+                const h = parseInt(hours, 10);
+                if (h >= 8 && h <= 16) {
+                    bellSound.currentTime = 0;
+                    bellSound.play().catch(e => console.error("Errore:", e));
+                }
+            }
+        }
+
+        async function checkTelegramUpdates() {
+            if (BOT_TOKEN === "INSERISCI_IL_TUO_TOKEN_QUI") return;
+            try {
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=-1`);
+                const data = await response.json();
+                if (data.ok && data.result.length > 0) {
+                    const lastMessage = data.result[0].message.text;
+                    localStorage.setItem('lastNotice', lastMessage);
+                    telegramMsgBox.textContent = lastMessage;
+                }
+            } catch (error) { console.error("Errore Telegram:", error); }
+        }
+
+        const savedNotice = localStorage.getItem('lastNotice');
+        if (savedNotice) telegramMsgBox.textContent = savedNotice;
+
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- GESTIONE METEO ---
+        const LAT = 45.74;
+        const LON = 9.05;
+        const weatherOverlay = document.getElementById('weather-overlay');
+        const weatherIcon = document.getElementById('weather-icon');
+
+        async function updateWeather() {
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true`);
+                const data = await res.json();
+                if(data.current_weather) {
+                    setWeatherAnimation(data.current_weather.weathercode);
+                }
+            } catch (e) { console.error("Errore Meteo:", e); }
+        }
+
+        function setWeatherAnimation(code) {
+            weatherOverlay.innerHTML = '';
+            if (code <= 1) {
+                weatherIcon.textContent = "☀️";
+                const sun = document.createElement('div'); sun.className = 'sun-ray'; weatherOverlay.appendChild(sun);
+            } else if (code <= 3 || code === 45 || code === 48) {
+                weatherIcon.textContent = "☁️"; createClouds(3);
+            } else if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82) || (code >= 95)) {
+                weatherIcon.textContent = "🌧️"; createRain(50);
+            } else if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) {
+                weatherIcon.textContent = "❄️"; createSnow(30);
+            }
+        }
+
+        function createRain(amount) {
+            for(let i=0; i<amount; i++) {
+                const drop = document.createElement('div'); drop.className = 'rain-drop';
+                drop.style.left = Math.random() * 100 + 'vw';
+                drop.style.animationDuration = (Math.random() * 1 + 0.5) + 's';
+                drop.style.animationDelay = Math.random() * 2 + 's';
+                weatherOverlay.appendChild(drop);
+            }
+        }
+        function createSnow(amount) {
+            for(let i=0; i<amount; i++) {
+                const flake = document.createElement('div'); flake.className = 'snowflake'; flake.textContent = '❄';
+                flake.style.left = Math.random() * 100 + 'vw'; flake.style.opacity = Math.random();
+                flake.style.fontSize = (Math.random() * 10 + 10) + 'px';
+                flake.style.animationDuration = (Math.random() * 3 + 2) + 's'; 
+                flake.style.animationDelay = Math.random() * 5 + 's';
+                weatherOverlay.appendChild(flake);
+            }
+        }
+        function createClouds(amount) {
+            for(let i=0; i<amount; i++) {
+                const cloud = document.createElement('div'); cloud.className = 'cloud';
+                const size = Math.random() * 100 + 100;
+                cloud.style.width = size + 'px'; cloud.style.height = (size / 3) + 'px';
+                cloud.style.top = (Math.random() * 20) + '%'; cloud.style.opacity = 0.5;
+                cloud.style.left = '-200px';
+                cloud.style.animationDuration = (Math.random() * 20 + 20) + 's'; 
+                cloud.style.animationDelay = (Math.random() * 10) + 's';
+                weatherOverlay.appendChild(cloud);
+            }
+        }
+
+        // --- DATABASE INTERNO ---
+        const worldDaysDB = {
+            "27/01": "🕯️ Giorno della Memoria",
+            "07/02": "🚫 Giornata contro il Bullismo",
+            "08/03": "🌾 Giornata della Donna",
+            "19/03": "👔 Festa del Papà",
+            "21/03": "🌳 Giornata delle Foreste e della Poesia",
+            "22/03": "💧 Giornata Mondiale dell'Acqua",
+            "02/04": "🧩 Giornata Consapevolezza Autismo",
+            "07/04": "medical_services Giornata Mondiale della Salute",
+            "22/04": "🌍 Giornata della Terra (Earth Day)",
+            "01/05": "🔧 Festa dei Lavoratori",
+            "09/05": "🇪🇺 Festa dell'Europa",
+            "02/06": "🇮🇹 Festa della Repubblica",
+            "05/06": "♻️ Giornata Mondiale dell'Ambiente",
+            "02/10": "👴👵 Festa dei Nonni",
+            "04/10": "🐾 Giornata Mondiale degli Animali",
+            "16/10": "🍞 Giornata Mondiale dell'Alimentazione",
+            "20/11": "👶 Giornata dei Diritti dell'Infanzia",
+            "25/11": "👠 Giornata contro la violenza sulle donne",
+            "03/12": "♿ Giornata delle Persone con Disabilità",
+            "25/12": "🎄 Buon Natale!",
+        };
+
+        const healthTipsDB = [
+            "🍎 Mangia 5 porzioni di frutta e verdura al giorno!",
+            "💧 Bevi almeno 2 litri d'acqua, specialmente se fai sport.",
+            "🏃 Usa le scale invece dell'ascensore: è allenamento gratis!",
+            "😴 Dormi almeno 8-9 ore a notte per ricaricare il cervello.",
+            "🚫 Evita le bevande zuccherate, l'acqua è la scelta migliore.",
+            "🤸 Fai stretching prima e dopo l'attività fisica.",
+            "👟 Le scarpe giuste prevengono infortuni: controlla le tue!",
+            "📵 Spegni il telefono 30 minuti prima di dormire.",
+            "🦷 Lavati i denti dopo ogni pasto, il sorriso è importante!",
+            "🥪 La colazione è il pasto più importante: non saltarla!",
+            "🌞 Stare all'aria aperta aumenta la vitamina D e il buonumore.",
+            "🤝 Nello sport vince chi rispetta le regole (Fair Play).",
+            "🧘 Prenditi un momento di pausa se ti senti stressato.",
+            "🍌 Una banana è lo snack perfetto prima dell'allenamento.",
+            "💪 I muscoli crescono quando riposi: il recupero è fondamentale."
+        ];
+
+        function updateTickers() {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const todayKey = `${day}/${month}`;
+
+            const worldDayBox = document.getElementById('world-day-text');
+            if (worldDaysDB[todayKey]) {
+                worldDayBox.textContent = `OGGI È: ${worldDaysDB[todayKey]}`;
+            } else {
+                const quotes = [
+                    "🚀 Oggi è un giorno perfetto per imparare qualcosa di nuovo!",
+                    "🌟 Il talento ti fa vincere una partita, l'intelligenza e il lavoro di squadra vincono i campionati.",
+                    "🏫 La scuola è il passaporto per il futuro.",
+                    "💡 La creatività è contagiosa: trasmettila!"
+                ];
+                worldDayBox.textContent = quotes[Math.floor(Math.random() * quotes.length)];
+            }
+
+            const healthTipBox = document.getElementById('health-tip-text');
+            const randomTip = healthTipsDB[Math.floor(Math.random() * healthTipsDB.length)];
+            healthTipBox.textContent = `💡 LO SAPEVI? ${randomTip}`;
+        }
+    </script>
+</body>
+</html>
